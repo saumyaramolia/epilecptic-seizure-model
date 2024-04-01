@@ -4,8 +4,11 @@ from pydantic import BaseModel
 import numpy as np
 
 # Load the trained model
-with open('decision_tree_model.pkl', 'rb') as file:
-    model = pickle.load(file)
+try:
+    with open('decision_tree_model.pkl', 'rb') as file:
+        model = pickle.load(file)
+except Exception as e:
+    raise RuntimeError("Failed to load the model: {}".format(str(e)))
 
 # Define input data model
 class InputData(BaseModel):
@@ -27,5 +30,7 @@ async def predict(data: InputData):
 
         return {"prediction": int(prediction[0]), "result": result}
 
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail="Bad request: {}".format(str(ve)))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error: {}".format(str(e)))
