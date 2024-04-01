@@ -21,6 +21,14 @@ async def predict(data: InputData):
     try:
         features = np.array(data.features).reshape(1, -1)
         prediction = model.predict(features)
-        return {"prediction": int(prediction[0])}
+
+        # Interpret the prediction
+        if prediction[0] == 1:
+            result = "Going to have a seizure"
+        else:
+            result = "Not having a seizure"
+
+        return {"prediction": int(prediction[0]), "result": result}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
