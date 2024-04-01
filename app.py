@@ -7,14 +7,11 @@ import numpy as np
 with open('decision_tree_model.pkl', 'rb') as file:
     model = pickle.load(file)
 
-
 # Define input data model
 class InputData(BaseModel):
     features: list
 
-
 app = FastAPI()
-
 
 @app.post("/predict")
 async def predict(data: InputData):
