@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -218,6 +219,17 @@ class DataInput(BaseModel):
     # Add more features X3, X4, ..., X178 as needed
 
 
+# Define function to make prediction asynchronously
+async def predict_async(input_data):
+    # Make prediction using the loaded model
+    prediction = loaded_model.predict(input_data)
+
+    # Check if the prediction indicates epilepsy (1) or not (0)
+    has_epilepsy = bool(prediction[0])
+
+    return {"has_epilepsy": has_epilepsy}
+
+
 # Define endpoint to make predictions
 @app.post("/predict")
 async def predict(data: DataInput):
@@ -225,13 +237,15 @@ async def predict(data: DataInput):
         # Convert input data to a numpy array
         input_data = np.array([[getattr(data, f"X{i}") for i in range(1, 179)]])
 
-        # Make prediction using the loaded model
-        prediction = loaded_model.predict(input_data)
+        # Execute the prediction asynchronously
+        prediction_task = asyncio.create_task(predict_async(input_data))
 
-        # Check if the prediction indicates epilepsy (1) or not (0)
-        has_epilepsy = bool(prediction[0])
+        # Wait for the prediction result with a timeout of 5 seconds
+        prediction_result = await asyncio.wait_for(prediction_task, timeout=5)
 
-        # Return the result
-        return {"has_epilepsy": has_epilepsy}
+        # Return the prediction result
+        return prediction_result
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="Prediction timeout: The prediction took too long to process.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
