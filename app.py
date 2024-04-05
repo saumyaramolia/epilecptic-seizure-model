@@ -1,5 +1,6 @@
 import pickle
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 
@@ -10,11 +11,23 @@ try:
 except Exception as e:
     raise RuntimeError("Failed to load the model: {}".format(str(e)))
 
+
 # Define input data model
 class InputData(BaseModel):
     features: list
 
+
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can replace ["*"] with specific origins if needed
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.post("/predict")
 async def predict(data: InputData):
